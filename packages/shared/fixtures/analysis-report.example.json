@@ -1,0 +1,188 @@
+{
+  "sessionId": "sess_example",
+  "overall": 74,
+  "cefr": "B2",
+  "confidenceIndex": 68,
+  "skills": {
+    "grammar": 72,
+    "vocabulary": 70,
+    "fluency": 76,
+    "pronunciation": 80,
+    "coherence": 74,
+    "taskAchievement": 83,
+    "communication": 71,
+    "confidence": 68
+  },
+  "deterministic": {
+    "speakingTimeSec": 312.4,
+    "agentSpeakingTimeSec": 228.1,
+    "talkSharePct": 57.8,
+    "wpm": 128.5,
+    "wpmSeries": [
+      { "minute": 0, "wpm": 110 },
+      { "minute": 1, "wpm": 132 },
+      { "minute": 2, "wpm": 140 }
+    ],
+    "pauses": {
+      "over500ms": 14,
+      "over1500ms": 4,
+      "over3000ms": 1,
+      "totalPauseSec": 21.3,
+      "list": [{ "atMs": 12000, "durationMs": 1800 }]
+    },
+    "meanResponseLatencyMs": 1420,
+    "fillers": {
+      "per100Words": 3.1,
+      "total": 21,
+      "byWord": { "um": 9, "basically": 6, "like": 6 },
+      "hits": [{ "word": "um", "atMs": 5200 }]
+    },
+    "repetitions": {
+      "count": 3,
+      "falseStarts": 2,
+      "selfCorrections": 1,
+      "examples": ["I I was working"]
+    },
+    "vocabulary": {
+      "totalWords": 670,
+      "uniqueWords": 241,
+      "ttr": 0.36,
+      "mattr": 0.71,
+      "avgWordLength": 4.4,
+      "pctTop1k": 82.1,
+      "pctTop2k": 90.3,
+      "pctTop5k": 96.5,
+      "estimatedLevel": "B2",
+      "advancedWords": ["cross-functional", "stakeholder"],
+      "overusedWords": [{ "word": "basically", "count": 6 }]
+    },
+    "sentences": { "count": 58, "avgLength": 11.6, "pctQuestions": 8.6, "pctComplex": 31.0 },
+    "pronunciation": {
+      "meanConfidence": 0.91,
+      "lowConfidenceWords": [
+        { "word": "vehicle", "confidence": 0.52, "atMs": 90200, "phoneme": "v/w" }
+      ],
+      "confidenceHistogram": [{ "bucket": "0.9-1.0", "count": 520 }],
+      "l1Flags": [{ "phoneme": "v/w", "words": ["vehicle", "very"] }]
+    },
+    "codeSwitches": {
+      "count": 1,
+      "list": [{ "text": "matlab", "atMs": 150000, "suggestion": "I mean" }]
+    },
+    "turnTaking": {
+      "userTurns": 18,
+      "agentTurns": 19,
+      "avgUserTurnSec": 17.4,
+      "avgUserTurnWords": 37.2,
+      "interruptionsMade": 1,
+      "interruptionsReceived": 0,
+      "hintsUsed": 1
+    }
+  },
+  "judged": {
+    "grammar": {
+      "score": 72,
+      "band": "B2",
+      "evidence": ["I am working here since three years"],
+      "comment": "Mostly accurate; tense with 'since/for' is the recurring issue."
+    },
+    "vocabulary": {
+      "score": 70,
+      "band": "B2",
+      "evidence": ["cross-functional"],
+      "comment": "Good professional range; some overuse of 'basically'."
+    },
+    "fluency": {
+      "score": 76,
+      "band": "B2",
+      "evidence": [],
+      "comment": "Steady pace with a few long pauses before complex answers."
+    },
+    "pronunciation": {
+      "score": 80,
+      "band": "B2",
+      "evidence": ["vehicle"],
+      "comment": "Clear overall; watch v/w."
+    },
+    "taskAchievement": {
+      "score": 83,
+      "band": "B2",
+      "evidence": ["Could you tell me more about the team?"],
+      "comment": "All three criteria met."
+    },
+    "communication": {
+      "score": 71,
+      "band": "B2",
+      "evidence": ["Let me give you an example"],
+      "comment": "Clear structure; could be more concise.",
+      "structure": 75,
+      "conciseness": 62,
+      "activeListening": 78,
+      "register": 80,
+      "assertiveness": 66,
+      "questionAsking": 70,
+      "empathy": 72,
+      "persuasiveness": 65,
+      "hedging": 60
+    },
+    "interview": {
+      "answerStructure": 74,
+      "relevance": 80,
+      "redFlags": [],
+      "hireability": 72,
+      "reasons": "Clear motivation and relevant experience; answers could be tighter."
+    },
+    "ielts": null
+  },
+  "grammarErrors": [
+    {
+      "quote": "I am working here since three years",
+      "correction": "I have been working here for three years",
+      "category": "tense",
+      "explanation": "Use present perfect continuous with 'for' + a duration.",
+      "severity": 2,
+      "atMs": 40200
+    }
+  ],
+  "rewrites": [
+    {
+      "original": "Basically I was doing the backend stuff.",
+      "better": "I owned the backend services for the payments team.",
+      "why": "Specific and confident; drops the filler."
+    }
+  ],
+  "strengths": [
+    {
+      "title": "Clear structure",
+      "example": "You used present → past → future for your introduction."
+    }
+  ],
+  "priorities": [
+    {
+      "title": "Present perfect for durations",
+      "example": "I am working here since three years",
+      "fix": "I have been working here for three years"
+    }
+  ],
+  "taskCriteria": [
+    {
+      "criterion": "Gives a structured self-introduction",
+      "met": true,
+      "evidence": "Currently I'm working as a backend engineer…"
+    }
+  ],
+  "recommendedDrills": [
+    { "scenarioId": "fluency-filler-elimination", "reason": "21 fillers in 5 minutes" }
+  ],
+  "vocabBank": [
+    {
+      "word": "stakeholder",
+      "definition": "A person with an interest in a project's outcome",
+      "example": "I aligned the stakeholders before the launch.",
+      "ipa": "/ˈsteɪkˌhoʊldər/",
+      "partOfSpeech": "noun"
+    }
+  ],
+  "summary": "A confident, well-structured screen. Tighten durations with present perfect and trim fillers to sound even more polished.",
+  "deltas": { "overall": 3.5, "fillersPer100": -0.8 }
+}

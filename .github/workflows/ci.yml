@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUENT_SKIP_ENV_VALIDATION: "1"
+
+jobs:
+  web:
+    name: Web (lint · typecheck · test · build)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: fluent
+          POSTGRES_PASSWORD: fluent
+          POSTGRES_DB: fluent
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U fluent" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://fluent:fluent@localhost:5432/fluent
+      OWNER_EMAIL: ci@example.com
+      OWNER_PASSWORD_HASH: $2a$12$ciciciciciciciciciciciciciciciciciciciciciciciciciciciciu
+      AUTH_SECRET: ci-secret-ci-secret-ci-secret
+      LIVEKIT_URL: ws://localhost:7880
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm shared:gen && git diff --exit-code packages/shared/src/generated
+      - run: pnpm --filter @fluent/web db:generate
+      - run: pnpm --filter @fluent/web db:migrate
+      - run: pnpm --filter @fluent/web db:seed
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm --filter @fluent/web build
+
+  agent:
+    name: Agent (ruff · mypy · pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --all-extras
+      - run: uv run ruff check . && uv run ruff format --check .
+      - run: uv run mypy src
+      - run: uv run pytest -q -m "not evals"
+
+  simulations:
+    # Whole-conversation simulations run on LiveKit Cloud and need project credentials +
+    # an LLM key. They run on pushes to main when the secrets are configured.
+    name: Agent simulations (LiveKit Cloud)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [agent]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/agent
+    env:
+      LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+      LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+      LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.12
+      - run: uv sync --all-extras
+      - name: Install LiveKit CLI
+        run: curl -sSL https://get.livekit.io/cli | bash
+      - name: Run text simulations
+        if: env.LIVEKIT_API_KEY != ''
+        run: lk agent simulate text --scenarios scenarios/smoke.yaml --yes
+      - name: Skipped (no LiveKit Cloud secrets)
+        if: env.LIVEKIT_API_KEY == ''
+        run: echo "LIVEKIT_* secrets not configured; simulations skipped."

@@ -1,0 +1,42 @@
+{
+  "id": "interview-hr-screening",
+  "themeId": "interviews",
+  "title": "HR screening: tell me about yourself",
+  "description": "A 15-minute phone screen with an HR recruiter at a Bengaluru product company. Introduce yourself, explain your background and why you want the role.",
+  "difficulty": "B1",
+  "mode": "interview",
+  "agentPersona": {
+    "name": "Meera Iyer",
+    "role": "HR recruiter at Zephyr Labs",
+    "personality": "warm, efficient, encouraging, keeps the conversation moving",
+    "accent": "Indian English"
+  },
+  "agentOpeningLine": "Hi, this is Meera from Zephyr Labs. Thanks for making time today. To start, could you tell me a little about yourself?",
+  "learnerGoal": "Give a clear, confident two-minute self-introduction and answer follow-up questions about your experience and motivation.",
+  "successCriteria": [
+    "Gives a structured self-introduction (present, past, future)",
+    "Explains motivation for the role with a concrete reason",
+    "Asks at least one question about the company or role"
+  ],
+  "keyVocabulary": [
+    "background",
+    "responsible for",
+    "hands-on",
+    "cross-functional",
+    "notice period",
+    "growth"
+  ],
+  "usefulPhrases": [
+    "Currently I'm working as…",
+    "In my previous role I was responsible for…",
+    "What excites me about this role is…",
+    "Could you tell me more about the team?"
+  ],
+  "commonMistakesToWatch": [
+    "I am working here since 3 years (→ I have been working here for 3 years)",
+    "Myself Prasad (→ I'm Prasad)"
+  ],
+  "suggestedDurationMin": 10,
+  "systemPromptTemplate": "You are {{persona.name}}, {{persona.role}}. Run a realistic HR phone screen. Ask one question at a time, follow up on specifics, and keep each turn under 40 words.",
+  "tags": ["interview", "popular"]
+}

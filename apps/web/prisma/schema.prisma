@@ -1,0 +1,397 @@
+// Fluent — single-user data model. Mirrored in apps/agent/src/fluent_agent/schemas.py (Pydantic).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum Difficulty {
+  A2
+  B1
+  B2
+  C1
+}
+
+enum ScenarioMode {
+  roleplay
+  discussion
+  interview
+  drill
+  free_talk
+}
+
+enum CoachingMode {
+  immersive
+  gentle
+  active
+  strict
+  drill
+}
+
+enum SessionStatus {
+  starting
+  live
+  ended
+  analyzing
+  complete
+  failed
+}
+
+enum Speaker {
+  human
+  agent
+}
+
+enum SessionEventType {
+  hint
+  correction
+  code_switch
+  interruption
+  tool_call
+  latency
+  good_phrase
+  silence
+  drill_score
+  persona_switch
+  system
+}
+
+enum GrammarCategory {
+  tense
+  article
+  preposition
+  subject_verb
+  word_order
+  plural
+  modal
+  conditional
+  other
+}
+
+enum VocabStatus {
+  new
+  learning
+  mastered
+}
+
+enum GoalKind {
+  weekly_minutes
+  weekly_sessions
+  target_cefr
+}
+
+// ───────────────────────────── Core ─────────────────────────────
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  createdAt    DateTime      @default(now())
+  profile      UserProfile?
+  sessions     Session[]
+  vocab        VocabEntry[]
+  goals        Goal[]
+  favourites   Favourite[]
+  customScenarios CustomScenario[]
+  settings     UserSettings?
+}
+
+model UserSettings {
+  userId             String       @id
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstLanguage      String       @default("Hindi")
+  defaultScenarioId  String?
+  defaultMode        CoachingMode @default(gentle)
+  defaultDifficulty  Difficulty   @default(B1)
+  defaultVoice       String       @default("priya")
+  defaultSpeed       Float        @default(1.0)
+  defaultDurationMin Int          @default(10)
+  captionsOn         Boolean      @default(true)
+  keyPhrasesOn       Boolean      @default(true)
+  pushToTalk         Boolean      @default(false)
+  noiseSuppression   Boolean      @default(true)
+  recordSessions     Boolean      @default(false)
+  theme              String       @default("dark")
+  preflightDone      Boolean      @default(false)
+  micDeviceId        String?
+  updatedAt          DateTime     @updatedAt
+}
+
+/// Rolling learner profile, recomputed after every analysed session. Injected into the agent prompt.
+model UserProfile {
+  userId              String   @id
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cefr                String   @default("B1")
+  overallScore        Float    @default(0)
+  confidenceIndex     Float    @default(0)
+  rollingMetrics      Json     @default("{}") // { metricKey: rollingAvg }
+  recurringErrors     Json     @default("{}") // { category: count }
+  fillerTrend         Json     @default("[]") // [{at, per100}]
+  vocabTrend          Json     @default("[]") // [{at, level}]
+  weakPhonemes        Json     @default("[]") // ["v/w", "th"]
+  strengths           Json     @default("[]")
+  priorities          Json     @default("[]")
+  streakDays          Int      @default(0)
+  lastPracticedOn     DateTime?
+  totalMinutesSpoken  Float    @default(0)
+  totalSessions       Int      @default(0)
+  updatedAt           DateTime @updatedAt
+}
+
+// ───────────────────────────── Content ─────────────────────────────
+
+model Theme {
+  id          String     @id
+  slug        String     @unique
+  title       String
+  description String
+  icon        String
+  order       Int
+  scenarios   Scenario[]
+}
+
+model Scenario {
+  id                    String       @id
+  themeId               String
+  theme                 Theme        @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  title                 String
+  description           String
+  difficulty            Difficulty
+  mode                  ScenarioMode
+  personaName           String
+  personaRole           String
+  personaPersonality    String
+  personaAccent         String
+  agentOpeningLine      String
+  learnerGoal           String
+  successCriteria       Json         // string[]
+  keyVocabulary         Json         // string[]
+  usefulPhrases         Json         // string[]
+  commonMistakesToWatch Json         // string[]
+  suggestedDurationMin  Int
+  systemPromptTemplate  String
+  characters            Json?        // multi-character scenarios: [{name, role, personality, voice}]
+  tags                  Json         @default("[]")
+  order                 Int          @default(0)
+  sessions              Session[]
+  favourites            Favourite[]
+
+  @@index([themeId])
+  @@index([difficulty])
+}
+
+model CustomScenario {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    String
+  scenario  Json     // full Scenario-shaped object (shared schema)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Favourite {
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([userId, scenarioId])
+}
+
+// ───────────────────────────── Sessions ─────────────────────────────
+
+model Session {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioId      String?
+  scenario        Scenario?      @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+  customScenario  Json?          // snapshot when a custom scenario is used
+  scenarioTitle   String
+  themeSlug       String
+  difficulty      Difficulty
+  coachingMode    CoachingMode
+  agentVoice      String
+  agentSpeed      Float          @default(1.0)
+  durationMin     Int?           // requested length, null = open
+  status          SessionStatus  @default(starting)
+  livekitRoomName String         @unique
+  dispatchId      String?
+  startedAt       DateTime?
+  endedAt         DateTime?
+  durationSec     Int?
+  recordingUrl    String?
+  egressId        String?
+  endReason       String?
+  failureReason   String?
+  analysisAttempts Int           @default(0)
+  analysisStartedAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  utterances   Utterance[]
+  events       SessionEvent[]
+  report       AnalysisReport?
+  metricPoints MetricPoint[]
+  grammarErrors GrammarError[]
+  usage        UsageLog[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, status])
+  @@index([scenarioId])
+}
+
+model Utterance {
+  id             String   @id @default(cuid())
+  sessionId      String
+  session        Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  seq            Int
+  speaker        Speaker
+  agentCharacter String?
+  text           String
+  startMs        Int
+  endMs          Int
+  words          Json?    // [{w, start, end, conf, filler?}]
+  confidence     Float?
+  fillerCount    Int      @default(0)
+  interrupted    Boolean  @default(false)
+  metrics        Json?    // per-turn latency (ms): stt, eou, llm_ttft, tts_ttfb, e2e
+  createdAt      DateTime @default(now())
+
+  @@unique([sessionId, seq])
+  @@index([sessionId, startMs])
+}
+
+model SessionEvent {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      SessionEventType
+  atMs      Int
+  payload   Json
+  createdAt DateTime         @default(now())
+
+  @@index([sessionId, atMs])
+  @@index([type])
+}
+
+model AnalysisReport {
+  id         String   @id @default(cuid())
+  sessionId  String   @unique
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  overall    Float
+  cefr       String
+  confidence Float
+  metrics    Json     // deterministic + judged metrics (shared AnalysisReport schema)
+  errors     Json     // grammar errors
+  rewrites   Json     // "say it better"
+  skills     Json     // 8 core skill scores
+  strengths  Json
+  priorities Json
+  taskCriteria Json
+  drills     Json     // recommended next drills
+  vocab      Json     // vocabulary bank entries
+  deltas     Json?    // vs last 5 sessions
+  summary    String
+  raw        Json?    // full report document
+  createdAt  DateTime @default(now())
+}
+
+model MetricPoint {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  metricKey String
+  value     Float
+  at        DateTime
+
+  @@index([metricKey, at])
+  @@index([sessionId])
+}
+
+model GrammarError {
+  id          String          @id @default(cuid())
+  sessionId   String
+  session     Session         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  category    GrammarCategory
+  quote       String
+  correction  String
+  explanation String
+  severity    Int             @default(1) // 1 minor, 2 moderate, 3 major
+  atMs        Int?
+  createdAt   DateTime        @default(now())
+
+  @@index([category, createdAt])
+  @@index([sessionId])
+}
+
+model VocabEntry {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word         String
+  definition   String
+  example      String
+  ipa          String?
+  partOfSpeech String?
+  source       String?     // sessionId or "manual"
+  status       VocabStatus @default(new)
+  easeFactor   Float       @default(2.5)
+  intervalDays Int         @default(0)
+  repetitions  Int         @default(0)
+  nextReviewAt DateTime    @default(now())
+  lastReviewedAt DateTime?
+  createdAt    DateTime    @default(now())
+
+  @@unique([userId, word])
+  @@index([userId, nextReviewAt])
+  @@index([userId, status])
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      GoalKind
+  target    Float
+  targetCefr String?
+  dueDate   DateTime?
+  remindByEmail Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, kind])
+}
+
+model UsageLog {
+  id        String   @id @default(cuid())
+  sessionId String?
+  session   Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  provider  String   // openai | deepgram | cartesia | elevenlabs | anthropic | livekit
+  kind      String   // llm | stt | tts | analysis
+  model     String?
+  inputTokens  Int   @default(0)
+  outputTokens Int   @default(0)
+  characters   Int   @default(0)
+  audioSeconds Float @default(0)
+  estimatedCostUsd Float @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sessionId])
+}
+
+/// Postgres-backed single-row rate limiter for login attempts (single user → tiny table).
+model LoginAttempt {
+  key       String   @id // ip or email
+  count     Int      @default(0)
+  windowStart DateTime @default(now())
+}

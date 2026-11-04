@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fluent.app/schemas/scenario.schema.json",
+  "title": "Scenario",
+  "description": "A practice scenario (seeded or custom-generated). Shared by web (TS) and agent (Pydantic).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "themeId",
+    "title",
+    "description",
+    "difficulty",
+    "mode",
+    "agentPersona",
+    "agentOpeningLine",
+    "learnerGoal",
+    "successCriteria",
+    "keyVocabulary",
+    "usefulPhrases",
+    "commonMistakesToWatch",
+    "suggestedDurationMin",
+    "systemPromptTemplate"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "themeId": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["A2", "B1", "B2", "C1"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["roleplay", "discussion", "interview", "drill", "free_talk"]
+    },
+    "agentPersona": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "role", "personality", "accent"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "personality": {
+          "type": "string"
+        },
+        "accent": {
+          "type": "string",
+          "description": "Accent hint for TTS voice selection, e.g. 'Indian English', 'neutral'"
+        }
+      }
+    },
+    "agentOpeningLine": {
+      "type": "string",
+      "minLength": 5
+    },
+    "learnerGoal": {
+      "type": "string"
+    },
+    "successCriteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "keyVocabulary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "usefulPhrases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "commonMistakesToWatch": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "suggestedDurationMin": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 30
+    },
+    "systemPromptTemplate": {
+      "type": "string",
+      "minLength": 20
+    },
+    "characters": {
+      "type": "array",
+      "description": "Extra characters the single agent plays (group discussions, panel interviews).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "role", "personality", "voice"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "personality": {
+            "type": "string"
+          },
+          "voice": {
+            "type": "string",
+            "description": "Voice preset key (see voices catalogue)"
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

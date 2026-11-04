@@ -1,0 +1,798 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fluent.app/schemas/analysis-report.schema.json",
+  "title": "AnalysisReport",
+  "description": "Per-session analysis produced by the agent worker. Stored as JSONB and mirrored to metric rows.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sessionId",
+    "overall",
+    "cefr",
+    "confidenceIndex",
+    "skills",
+    "deterministic",
+    "judged",
+    "grammarErrors",
+    "rewrites",
+    "strengths",
+    "priorities",
+    "taskCriteria",
+    "recommendedDrills",
+    "vocabBank",
+    "summary"
+  ],
+  "definitions": {
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "cefr": {
+      "type": "string",
+      "enum": ["A1", "A2", "B1", "B2", "C1", "C2"]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "judgedMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "band", "evidence", "comment"],
+      "properties": {
+        "score": {
+          "$ref": "#/definitions/score"
+        },
+        "band": {
+          "$ref": "#/definitions/cefr"
+        },
+        "evidence": {
+          "$ref": "#/definitions/evidence"
+        },
+        "comment": {
+          "type": "string"
+        }
+      }
+    },
+    "grammarError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quote", "correction", "category", "explanation", "severity"],
+      "properties": {
+        "quote": {
+          "type": "string"
+        },
+        "correction": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "tense",
+            "article",
+            "preposition",
+            "subject_verb",
+            "word_order",
+            "plural",
+            "modal",
+            "conditional",
+            "other"
+          ]
+        },
+        "explanation": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "atMs": {
+          "type": ["integer", "null"]
+        }
+      }
+    },
+    "fillerHit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["word", "atMs"],
+      "properties": {
+        "word": {
+          "type": "string"
+        },
+        "atMs": {
+          "type": "integer"
+        }
+      }
+    },
+    "wordFlag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["word", "confidence", "atMs"],
+      "properties": {
+        "word": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "atMs": {
+          "type": "integer"
+        },
+        "phoneme": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  },
+  "properties": {
+    "sessionId": {
+      "type": "string"
+    },
+    "overall": {
+      "$ref": "#/definitions/score"
+    },
+    "cefr": {
+      "$ref": "#/definitions/cefr"
+    },
+    "confidenceIndex": {
+      "$ref": "#/definitions/score"
+    },
+    "skills": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grammar",
+        "vocabulary",
+        "fluency",
+        "pronunciation",
+        "coherence",
+        "taskAchievement",
+        "communication",
+        "confidence"
+      ],
+      "properties": {
+        "grammar": {
+          "$ref": "#/definitions/score"
+        },
+        "vocabulary": {
+          "$ref": "#/definitions/score"
+        },
+        "fluency": {
+          "$ref": "#/definitions/score"
+        },
+        "pronunciation": {
+          "$ref": "#/definitions/score"
+        },
+        "coherence": {
+          "$ref": "#/definitions/score"
+        },
+        "taskAchievement": {
+          "$ref": "#/definitions/score"
+        },
+        "communication": {
+          "$ref": "#/definitions/score"
+        },
+        "confidence": {
+          "$ref": "#/definitions/score"
+        }
+      }
+    },
+    "deterministic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "speakingTimeSec",
+        "agentSpeakingTimeSec",
+        "talkSharePct",
+        "wpm",
+        "wpmSeries",
+        "pauses",
+        "meanResponseLatencyMs",
+        "fillers",
+        "repetitions",
+        "vocabulary",
+        "sentences",
+        "pronunciation",
+        "codeSwitches",
+        "turnTaking"
+      ],
+      "properties": {
+        "speakingTimeSec": {
+          "type": "number"
+        },
+        "agentSpeakingTimeSec": {
+          "type": "number"
+        },
+        "talkSharePct": {
+          "type": "number"
+        },
+        "wpm": {
+          "type": "number"
+        },
+        "wpmSeries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["minute", "wpm"],
+            "properties": {
+              "minute": {
+                "type": "integer"
+              },
+              "wpm": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "pauses": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["over500ms", "over1500ms", "over3000ms", "totalPauseSec", "list"],
+          "properties": {
+            "over500ms": {
+              "type": "integer"
+            },
+            "over1500ms": {
+              "type": "integer"
+            },
+            "over3000ms": {
+              "type": "integer"
+            },
+            "totalPauseSec": {
+              "type": "number"
+            },
+            "list": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["atMs", "durationMs"],
+                "properties": {
+                  "atMs": {
+                    "type": "integer"
+                  },
+                  "durationMs": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "meanResponseLatencyMs": {
+          "type": "number"
+        },
+        "fillers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["per100Words", "total", "byWord", "hits"],
+          "properties": {
+            "per100Words": {
+              "type": "number"
+            },
+            "total": {
+              "type": "integer"
+            },
+            "byWord": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "hits": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/fillerHit"
+              }
+            }
+          }
+        },
+        "repetitions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "falseStarts", "selfCorrections", "examples"],
+          "properties": {
+            "count": {
+              "type": "integer"
+            },
+            "falseStarts": {
+              "type": "integer"
+            },
+            "selfCorrections": {
+              "type": "integer"
+            },
+            "examples": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "vocabulary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "totalWords",
+            "uniqueWords",
+            "ttr",
+            "mattr",
+            "avgWordLength",
+            "pctTop1k",
+            "pctTop2k",
+            "pctTop5k",
+            "estimatedLevel",
+            "advancedWords",
+            "overusedWords"
+          ],
+          "properties": {
+            "totalWords": {
+              "type": "integer"
+            },
+            "uniqueWords": {
+              "type": "integer"
+            },
+            "ttr": {
+              "type": "number"
+            },
+            "mattr": {
+              "type": "number"
+            },
+            "avgWordLength": {
+              "type": "number"
+            },
+            "pctTop1k": {
+              "type": "number"
+            },
+            "pctTop2k": {
+              "type": "number"
+            },
+            "pctTop5k": {
+              "type": "number"
+            },
+            "estimatedLevel": {
+              "$ref": "#/definitions/cefr"
+            },
+            "advancedWords": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "overusedWords": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["word", "count"],
+                "properties": {
+                  "word": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "sentences": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "avgLength", "pctQuestions", "pctComplex"],
+          "properties": {
+            "count": {
+              "type": "integer"
+            },
+            "avgLength": {
+              "type": "number"
+            },
+            "pctQuestions": {
+              "type": "number"
+            },
+            "pctComplex": {
+              "type": "number"
+            }
+          }
+        },
+        "pronunciation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["meanConfidence", "lowConfidenceWords", "confidenceHistogram", "l1Flags"],
+          "properties": {
+            "meanConfidence": {
+              "type": "number"
+            },
+            "lowConfidenceWords": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/wordFlag"
+              }
+            },
+            "confidenceHistogram": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["bucket", "count"],
+                "properties": {
+                  "bucket": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer"
+                  }
+                }
+              }
+            },
+            "l1Flags": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["phoneme", "words"],
+                "properties": {
+                  "phoneme": {
+                    "type": "string"
+                  },
+                  "words": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "codeSwitches": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "list"],
+          "properties": {
+            "count": {
+              "type": "integer"
+            },
+            "list": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["text", "atMs"],
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "atMs": {
+                    "type": "integer"
+                  },
+                  "suggestion": {
+                    "type": ["string", "null"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "turnTaking": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "userTurns",
+            "agentTurns",
+            "avgUserTurnSec",
+            "avgUserTurnWords",
+            "interruptionsMade",
+            "interruptionsReceived",
+            "hintsUsed"
+          ],
+          "properties": {
+            "userTurns": {
+              "type": "integer"
+            },
+            "agentTurns": {
+              "type": "integer"
+            },
+            "avgUserTurnSec": {
+              "type": "number"
+            },
+            "avgUserTurnWords": {
+              "type": "number"
+            },
+            "interruptionsMade": {
+              "type": "integer"
+            },
+            "interruptionsReceived": {
+              "type": "integer"
+            },
+            "hintsUsed": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "judged": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grammar",
+        "vocabulary",
+        "fluency",
+        "pronunciation",
+        "taskAchievement",
+        "communication"
+      ],
+      "properties": {
+        "grammar": {
+          "$ref": "#/definitions/judgedMetric"
+        },
+        "vocabulary": {
+          "$ref": "#/definitions/judgedMetric"
+        },
+        "fluency": {
+          "$ref": "#/definitions/judgedMetric"
+        },
+        "pronunciation": {
+          "$ref": "#/definitions/judgedMetric"
+        },
+        "taskAchievement": {
+          "$ref": "#/definitions/judgedMetric"
+        },
+        "communication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "score",
+            "band",
+            "evidence",
+            "comment",
+            "structure",
+            "conciseness",
+            "activeListening",
+            "register",
+            "assertiveness",
+            "questionAsking",
+            "empathy",
+            "persuasiveness",
+            "hedging"
+          ],
+          "properties": {
+            "score": {
+              "$ref": "#/definitions/score"
+            },
+            "band": {
+              "$ref": "#/definitions/cefr"
+            },
+            "evidence": {
+              "$ref": "#/definitions/evidence"
+            },
+            "comment": {
+              "type": "string"
+            },
+            "structure": {
+              "$ref": "#/definitions/score"
+            },
+            "conciseness": {
+              "$ref": "#/definitions/score"
+            },
+            "activeListening": {
+              "$ref": "#/definitions/score"
+            },
+            "register": {
+              "$ref": "#/definitions/score"
+            },
+            "assertiveness": {
+              "$ref": "#/definitions/score"
+            },
+            "questionAsking": {
+              "$ref": "#/definitions/score"
+            },
+            "empathy": {
+              "$ref": "#/definitions/score"
+            },
+            "persuasiveness": {
+              "$ref": "#/definitions/score"
+            },
+            "hedging": {
+              "$ref": "#/definitions/score"
+            }
+          }
+        },
+        "interview": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["answerStructure", "relevance", "redFlags", "hireability", "reasons"],
+          "properties": {
+            "answerStructure": {
+              "$ref": "#/definitions/score"
+            },
+            "relevance": {
+              "$ref": "#/definitions/score"
+            },
+            "redFlags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "hireability": {
+              "$ref": "#/definitions/score"
+            },
+            "reasons": {
+              "type": "string"
+            }
+          }
+        },
+        "ielts": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": [
+            "fluencyCoherence",
+            "lexicalResource",
+            "grammaticalRange",
+            "pronunciation",
+            "overall"
+          ],
+          "properties": {
+            "fluencyCoherence": {
+              "type": "number"
+            },
+            "lexicalResource": {
+              "type": "number"
+            },
+            "grammaticalRange": {
+              "type": "number"
+            },
+            "pronunciation": {
+              "type": "number"
+            },
+            "overall": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "grammarErrors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/grammarError"
+      }
+    },
+    "rewrites": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["original", "better", "why"],
+        "properties": {
+          "original": {
+            "type": "string"
+          },
+          "better": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "strengths": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "example"],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "priorities": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "example", "fix"],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          },
+          "fix": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "taskCriteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterion", "met", "evidence"],
+        "properties": {
+          "criterion": {
+            "type": "string"
+          },
+          "met": {
+            "type": "boolean"
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "recommendedDrills": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenarioId", "reason"],
+        "properties": {
+          "scenarioId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "vocabBank": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["word", "definition", "example"],
+        "properties": {
+          "word": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          },
+          "ipa": {
+            "type": ["string", "null"]
+          },
+          "partOfSpeech": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "deltas": {
+      "type": ["object", "null"],
+      "additionalProperties": {
+        "type": "number"
+      }
+    }
+  }
+}
