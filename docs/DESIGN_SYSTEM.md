@@ -15,7 +15,7 @@
 - CSS variables `--ds-*` for light (`:root`) and dark (`.dark`), mapped into Tailwind through `@theme inline`
   (`bg-background-100`, `text-secondary`, `border-border`, `bg-blue-700`, `text-green-900`, …).
 - Dark is the default: `<html class="dark">` on first load; `next-themes` (`attribute="class"`) persists the choice.
-- Backgrounds dark `#000 / #0a0a0a / #111 / hover #1a1a1a`; light `#fff / #fafafa / #f5f5f5`.
+- Backgrounds dark `#000 / #0a0a0a / #111 / hover #1a1a1a`; light `#fff / #fafafa / #f5f5f5`. Text: primary `#ededed`/`#171717`, secondary `#a1a1a1`/`#666`, tertiary `#828282`/`#6b6b6b` (raised from `#666`/`#888` for WCAG AA 4.5:1).
 - Borders are hairlines (`#2e2e2e`/`#333` dark, `#eaeaea`/`#e5e5e5` light). Shadows only on floating elements
   (`shadow-menu`). Radius 6px inputs/buttons, 8–12px cards, full for pills. 4px grid.
 - Type scale 12/13/14/16/20/24/32/48/64 with `tracking-tight` on headings. Mono for numbers, ids, timestamps.

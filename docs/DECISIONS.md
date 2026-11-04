@@ -31,3 +31,6 @@ One line each: decision + reason. Newest at the bottom.
 - Session report "Export PDF" uses the browser print pipeline with print-only CSS (no PDF library); transcript download is a client-side `.txt` blob.
 - Voice flashcards are a generated custom scenario (`POST /api/vocab/voice-session`) built from due vocabulary, so the existing drill agent tooling (`score_drill_attempt`) covers them without a second agent mode.
 - Horizontal overflow on phones is prevented structurally (`min-w-0` cards, `overflow-x-hidden` main) after a 390px screenshot came out 605px wide.
+- Tertiary text tokens raised to `#828282` (dark) / `#6b6b6b` (light) after Lighthouse flagged `#666` at ~3.4:1; secondary tokens stay at Geist's values.
+- Dashboard pages are `noindex` + disallowed in `robots.txt` (private app); Lighthouse SEO on authenticated pages is therefore capped and accepted.
+- `CardTitle` renders an `h2` so card headings follow the page `h1` in order (Lighthouse heading-order).

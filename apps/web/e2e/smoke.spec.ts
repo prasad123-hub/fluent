@@ -37,5 +37,5 @@ test("login rejects wrong password", async ({ page }) => {
   await page.fill("#email", email);
   await page.fill("#password", "definitely-wrong-password");
   await page.click("button[type=submit]");
-  await expect(page.getByRole("alert")).toContainText(/don't match|Too many/);
+  await expect(page.getByRole("alert").first()).toContainText(/don't match|Too many/);
 });

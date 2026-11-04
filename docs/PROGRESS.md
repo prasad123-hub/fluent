@@ -55,7 +55,10 @@ Resume rule: read `SPEC.md`, this file and `docs/DECISIONS.md`, then continue fr
 
 ## Phase 11 — Recording/Egress, PDF, goals, settings, usage
 
-## Phase 12 — Hardening + deployment docs + FINAL_REPORT
+## Phase 12 — Hardening + deployment docs + FINAL_REPORT — DONE
+
+- Production build + `next start`; Lighthouse landing 100/100/100/100, dashboard 100/100/100 (SEO 54 by design: noindex); AA contrast fix for tertiary text; heading order; global error boundary; robots/sitemap; Playwright smoke spec (3 passing); 33 screenshots in `docs/screenshots/`.
+- `apps/agent/Dockerfile`, docker-compose `agent` profile, `docs/DEPLOYMENT.md` (LiveKit Cloud deploy/rollback/secrets, prewarm, drain, load, upgrades), `docs/ARCHITECTURE.md` (Mermaid), `README.md`, `docs/FINAL_REPORT.md`.
 
 ## Incomplete / TODO
 
