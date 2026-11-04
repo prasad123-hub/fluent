@@ -26,6 +26,7 @@ dev = [
 
 [project.scripts]
 agent = "fluent_agent.main:run"
+analysis-worker = "fluent_agent.analysis.cli:main"
 
 [build-system]
 requires = ["hatchling"]

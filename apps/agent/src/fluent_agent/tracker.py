@@ -17,6 +17,7 @@ from livekit.agents.voice.events import (
 from livekit.agents.voice.io import TimedString
 
 from .db import Database
+from .hinglish import detect_code_switch
 from .log import get_logger
 
 log = get_logger("tracker")
@@ -229,6 +230,18 @@ class SessionTracker:
         seq = self.seq
         at = self.now_ms()
         if msg.role == "user":
+            hits = detect_code_switch(text)
+            if hits:
+                self.event(
+                    "code_switch",
+                    {
+                        "text": text,
+                        "words": [h[0] for h in hits],
+                        "suggestions": [h[1] for h in hits],
+                        "source": "lexicon",
+                    },
+                    at,
+                )
             words = self._pending_words
             self._pending_words = []
             confs = self._pending_conf

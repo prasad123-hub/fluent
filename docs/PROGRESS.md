@@ -38,6 +38,7 @@ Resume rule: read `SPEC.md`, this file and `docs/DECISIONS.md`, then continue fr
 ## Phase 5 — Agent MVP
 
 ## Phase 6 — Practice flow UI — DONE
+
 - `/practice` launcher: search, theme chips, difficulty filter, Recommended/Recent/Favourites rows, Quick start card, sticky session config (difficulty, coaching mode, voice, speed, length, captions, key phrases), remembered defaults, favourite toggle (`/api/scenarios/:id/favourite`), settings API.
 - Pre-flight dialog (mic permission, device picker, level meter, "say I'm ready" check; skippable; remembered).
 - `/practice/[sessionId]`: LiveKit room (RoomContext, RoomAudioRenderer), audio-reactive canvas orb (listening/thinking/speaking), level ring, captions (lk.transcription), goal/criteria/phrases panel, pill controls (mute, push-to-talk, help, repeat, slower, captions, pause, panel, end), keyboard shortcuts (Space/H/C/Esc), timer, reconnect indicator, mic errors, status polling → report redirect; token refresh route for reloads.

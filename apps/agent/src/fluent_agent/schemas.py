@@ -78,7 +78,13 @@ class JudgedMetric(_Strict):
     comment: str
 
 
-class CommunicationMetric(JudgedMetric):
+class CommunicationMetric(_Strict):
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    score: float = Field(ge=0, le=100)
+    band: Cefr
+    evidence: list[str]
+    comment: str
     structure: float = Field(ge=0, le=100)
     conciseness: float = Field(ge=0, le=100)
     activeListening: float = Field(ge=0, le=100)

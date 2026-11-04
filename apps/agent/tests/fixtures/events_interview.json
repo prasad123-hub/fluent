@@ -1,0 +1,8 @@
+[
+  {"type": "correction", "atMs": 14100, "payload": {"original": "since three years", "corrected": "for three years", "category": "tense", "explanation": "duration"}},
+  {"type": "code_switch", "atMs": 12000, "payload": {"text": "matlab", "suggestion": "I mean", "source": "llm"}},
+  {"type": "code_switch", "atMs": 12050, "payload": {"text": "matlab", "words": ["matlab"], "suggestions": ["I mean"], "source": "lexicon"}},
+  {"type": "hint", "atMs": 18000, "payload": {"phrase": "Currently I'm working as…", "requested": true}},
+  {"type": "interruption", "atMs": 17400, "payload": {"by": "user", "turn": 3}},
+  {"type": "latency", "atMs": 15000, "payload": {"turn": 3, "llm_node_ttft": 420, "tts_node_ttfb": 210, "e2e_latency": 900}}
+]

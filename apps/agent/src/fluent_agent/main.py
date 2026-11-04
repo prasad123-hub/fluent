@@ -23,6 +23,7 @@ from livekit.agents import (
     JobProcess,
     ModelSettings,
     RunContext,
+    SimulationContext,
     ToolError,
     cli,
     function_tool,
@@ -142,28 +143,16 @@ class FluentAgent(Agent):
     async def on_user_turn_completed(self, turn_ctx: Any, new_message: Any) -> None:
         self.ctl.last_user_activity = time.time()
         self.ctl.silence_stage = 0
-        text = new_message.text_content or ""
-        hits = detect_code_switch(text)
-        if hits:
-            self.ctl.tracker.event(
-                "code_switch",
-                {
-                    "text": text,
-                    "words": [h[0] for h in hits],
-                    "suggestions": [h[1] for h in hits],
-                    "source": "lexicon",
-                },
+        hits = detect_code_switch(new_message.text_content or "")
+        if hits and self.cfg.meta.coachingMode in ("gentle", "active"):
+            turn_ctx.add_message(
+                role="system",
+                content=(
+                    "The learner just used Hindi words: "
+                    + ", ".join(f"'{h[0]}' (≈ '{h[1]}')" for h in hits)
+                    + ". Gently offer the English phrasing once and invite them to say it in English, then continue."
+                ),
             )
-            mode = self.cfg.meta.coachingMode
-            if mode in ("gentle", "active"):
-                turn_ctx.add_message(
-                    role="system",
-                    content=(
-                        "The learner just used Hindi words: "
-                        + ", ".join(f"'{h[0]}' (≈ '{h[1]}')" for h in hits)
-                        + ". Gently offer the English phrasing once and invite them to say it in English, then continue."
-                    ),
-                )
 
     # ── STT tap for word-level timings ────────────────────────────────
     async def stt_node(
@@ -512,6 +501,24 @@ def fixture_scenario() -> Scenario:
     return Scenario.model_validate(json.loads(FIXTURE_SCENARIO.read_text()))
 
 
+def metadata_from_simulation(ctx: JobContext | None) -> SessionDispatchMetadata | None:
+    """Under `lk agent simulate`, the scenario's userdata selects the practice scenario and coaching mode.
+    The production path is untouched: this returns None when there is no simulation context."""
+    if ctx is None:
+        return None
+    sim = ctx.simulation_context()
+    if sim is None:
+        return None
+    ud = sim.userdata()
+    return SessionDispatchMetadata(
+        sessionId=f"sim-{sim.simulation_job_id or 'local'}",
+        scenarioId=str(ud.get("scenarioId") or "interview-hr-screening"),
+        coachingMode=str(ud.get("coachingMode") or "gentle"),  # type: ignore[arg-type]
+        difficulty=str(ud.get("difficulty") or "B1"),  # type: ignore[arg-type]
+        durationMin=None,
+    )
+
+
 async def load_config(
     db: Database | None, meta: SessionDispatchMetadata | None, s: Settings
 ) -> SessionConfig:
@@ -670,6 +677,19 @@ server = AgentServer(
 )
 
 
+async def on_simulation_end(sim: SimulationContext) -> None:
+    """Code-side grading for simulations (can only veto): fail when a scenario planted an error but no
+    correction was logged, or when a strict/exam run handed out a hint."""
+    ctl: SessionControl | None = sim.job_context.proc.userdata.get("ctl")
+    if ctl is None:
+        return
+    ud = sim.userdata()
+    if ud.get("expectCorrection") and ctl.tracker.corrections == 0:
+        sim.fail(reason="no correction was logged although the scenario planted an error")
+    if ctl.cfg.meta.coachingMode == "strict" and ctl.tracker.hints_used > 0:
+        sim.fail(reason="a hint was given in strict/exam mode")
+
+
 async def on_session_end(ctx: JobContext) -> None:
     """Runs after the room session closes: finalise the session row and run analysis."""
     ctl: SessionControl | None = ctx.proc.userdata.get("ctl")
@@ -699,10 +719,14 @@ async def on_session_end(ctx: JobContext) -> None:
         log.info("session.finished", duration_sec=duration, reason=ctl.end_reason)
 
 
-@server.rtc_session(agent_name=settings().agent_name, on_session_end=on_session_end)
+@server.rtc_session(
+    agent_name=settings().agent_name,
+    on_session_end=on_session_end,
+    on_simulation_end=on_simulation_end,
+)
 async def entrypoint(ctx: JobContext) -> None:
     s = settings()
-    meta = parse_metadata(ctx)
+    meta = metadata_from_simulation(ctx) or parse_metadata(ctx)
     db = await connect_db(s)
     cfg = await load_config(db, meta, s)
     bind_session(

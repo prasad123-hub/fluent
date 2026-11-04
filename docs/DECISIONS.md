@@ -23,3 +23,7 @@ One line each: decision + reason. Newest at the bottom.
 - `FLUENT_FIXED_LOAD` (dev only) pins the load the worker reports: LiveKit assigns jobs by `target_load − reported_load`, and a single worker on a busy laptop/sandbox can otherwise be skipped ("no servers available").
 - Local runs unset `HTTP(S)_PROXY` for the agent: the sandbox egress proxy rejects plain `ws://localhost` CONNECTs with 405; irrelevant outside the sandbox.
 - Bcrypt hash in `.env` is written as `\$2b\$12…` because `@next/env` expands `$…` even inside single quotes (verified); hosting dashboards take the raw hash.
+- Analysis runs inside the agent worker's `on_session_end`; a separate `analysis-worker --watch` process (same package) picks up retries/crashed sessions by polling for `analyzing` rows — no queue, no Redis.
+- `wordfreq` (bundled English frequency data) provides the top-1k/2k/5k lists and Zipf frequencies for vocabulary metrics; it runs offline.
+- Without an LLM key the judge is a deterministic rule-based `scripted_judgement` so the pipeline, dashboard and tests work offline; real sessions use the model judge with a strict JSON schema.
+- JSON columns are passed to asyncpg as Python objects through a jsonb codec (never pre-serialised); the metrics loader tolerates legacy string-encoded rows.

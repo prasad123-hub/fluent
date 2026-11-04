@@ -4,13 +4,13 @@ Fluent's five coaching modes change **what the agent is told to do** (prompt blo
 `apps/agent/src/fluent_agent/prompt.py`) and **what the code allows** (e.g. `give_hint` refuses in
 Strict mode regardless of what the model wants). Both layers are listed here, with transcripts.
 
-| Mode | Prompt behaviour | Code-enforced behaviour |
-|---|---|---|
-| **Immersive** | Never breaks character, never corrects aloud; `log_correction` is called silently; Hinglish is answered naturally in English. | Corrections still reach the report via tool events; lexicon code-switch events are logged without any prompt nudge. |
-| **Gentle** | Stays in character and *recasts* the error naturally ("Oh, you've been working there for three years?") and logs it; offers the English phrase once when Hindi is used. | On lexicon code-switch the agent receives a one-turn system note to offer the English phrasing. |
-| **Active Coach** | One-line tip at natural pauses, then resumes; max one tip per turn; praises good phrases via `log_good_phrase`. | Same code-switch nudge as Gentle; silence prompts call `give_hint`. |
-| **Strict / Exam** | Formal register, no help, no commentary; band estimate at the end. | `give_hint` raises `ToolError("Hints are not available in exam mode…")`; silence handling repeats the question instead of hinting; timer is strict. |
-| **Drill** | Rapid prompts; `score_drill_attempt` after every attempt; running tally. | Scores are clamped 1–10, tallied in `SessionControl.drill_scores` and logged as `drill_score` events for the report. |
+| Mode              | Prompt behaviour                                                                                                                                                        | Code-enforced behaviour                                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Immersive**     | Never breaks character, never corrects aloud; `log_correction` is called silently; Hinglish is answered naturally in English.                                           | Corrections still reach the report via tool events; lexicon code-switch events are logged without any prompt nudge.                                 |
+| **Gentle**        | Stays in character and _recasts_ the error naturally ("Oh, you've been working there for three years?") and logs it; offers the English phrase once when Hindi is used. | On lexicon code-switch the agent receives a one-turn system note to offer the English phrasing.                                                     |
+| **Active Coach**  | One-line tip at natural pauses, then resumes; max one tip per turn; praises good phrases via `log_good_phrase`.                                                         | Same code-switch nudge as Gentle; silence prompts call `give_hint`.                                                                                 |
+| **Strict / Exam** | Formal register, no help, no commentary; band estimate at the end.                                                                                                      | `give_hint` raises `ToolError("Hints are not available in exam mode…")`; silence handling repeats the question instead of hinting; timer is strict. |
+| **Drill**         | Rapid prompts; `score_drill_attempt` after every attempt; running tally.                                                                                                | Scores are clamped 1–10, tallied in `SessionControl.drill_scores` and logged as `drill_score` events for the report.                                |
 
 Exact prompt blocks: `COACHING_BLOCKS` in `apps/agent/src/fluent_agent/prompt.py`
 (unit-tested in `apps/agent/tests/test_prompt.py`: all five produce distinct instructions).
@@ -313,4 +313,3 @@ scenario=interview-panel-mock mode=gentle
 
 Session ended. 4 turn(s) over 3s, ending with agent "fluent_agent".
 ```
-

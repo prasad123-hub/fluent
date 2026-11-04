@@ -1,0 +1,115 @@
+# Fluent — smoke simulations (text mode). Runs on LiveKit Cloud: `lk agent simulate text --scenarios scenarios/smoke.yaml --yes`
+# from apps/agent with LIVEKIT_* and OPENAI_API_KEY set. Each scenario pins the practice scenario + coaching mode through
+# userdata, which the agent reads via ctx.simulation_context() (see main.py simulation branch). Graded on conversation only.
+name: Fluent smoke — 5 scenarios × 2 coaching modes
+scenarios:
+  - label: HR screening, gentle — learner with 'since three years' tense slip
+    instructions: |-
+      You are Prasad, a backend developer in Pune with three years at Infosys, interviewing for a product company.
+      You speak fluent but imperfect Indian English: say "I am working in Infosys since three years" in your first answer.
+
+      Goals:
+      - Introduce yourself when asked
+      - Explain why you want to move (more ownership)
+      - Ask one question about the team
+    agent_expectations: The agent plays Meera the recruiter, stays in character, asks one question at a time, naturally recasts the
+      "since three years" slip as "for three years" without lecturing, and asks a follow-up about the learner's experience.
+    tags: { feature: coaching, mode: gentle }
+    userdata: { scenarioId: interview-hr-screening, coachingMode: gentle, difficulty: B1 }
+  - label: HR screening, active coach — explicit one-line tip
+    instructions: |-
+      You are Prasad, a backend developer in Pune. In your first answer say "myself Prasad, I am working in Infosys since three years".
+      Then answer the recruiter's questions briefly.
+
+      Goals:
+      - Introduce yourself
+      - Ask what the next steps are
+    agent_expectations: The agent gives at most one short tip per turn correcting "myself Prasad" or "since three years", then resumes
+      the interview in character. It must not stack several corrections in one turn.
+    tags: { feature: coaching, mode: active }
+    userdata: { scenarioId: interview-hr-screening, coachingMode: active, difficulty: B1 }
+  - label: Restaurant, immersive — Hinglish stays in character
+    instructions: |-
+      You are a hungry customer at a Bengaluru restaurant. Order a masala dosa and filter coffee. Use the Hindi word "matlab"
+      once ("matlab, not too spicy") and complain politely that the dosa is cold.
+
+      Goals:
+      - Order a main and a drink
+      - Complain politely about cold food and get a fix
+      - Ask for the bill
+    agent_expectations: The agent plays the waiter and never breaks character or comments on grammar or Hindi; it apologises for the cold
+      dosa and offers to reheat/replace it; it handles the bill when asked.
+    tags: { feature: coaching, mode: immersive }
+    userdata: { scenarioId: daily-restaurant-order, coachingMode: immersive, difficulty: B1 }
+  - label: Restaurant, gentle — offers the English phrase once
+    instructions: |-
+      You are a customer at a Bengaluru restaurant. Say "yaar, give me one dosa, matlab the plain one" when ordering, then continue in English.
+
+      Goals:
+      - Order food and a drink
+      - Ask what the waiter recommends
+    agent_expectations: The agent stays the waiter, gently offers the English phrasing once (e.g. "I mean"), does not shame the learner,
+      and continues taking the order.
+    tags: { feature: hinglish, mode: gentle }
+    userdata: { scenarioId: daily-restaurant-order, coachingMode: gentle, difficulty: B1 }
+  - label: IELTS Part 1, strict — no help given
+    instructions: |-
+      You are an IELTS candidate. Answer the examiner's Part 1 questions in one or two sentences each. After the second question,
+      ask "Can you help me? What should I say?".
+
+      Goals:
+      - Answer questions about work and hometown
+      - Ask the examiner for help once
+    agent_expectations: The agent behaves like a formal IELTS examiner, follows the Part 1 format, and when asked for help says that help
+      is not available in the exam and moves to the next question. No corrections during the test.
+    tags: { feature: coaching, mode: strict }
+    userdata: { scenarioId: exam-ielts-speaking-part1, coachingMode: strict, difficulty: B2 }
+  - label: IELTS Part 1, gentle — recasts allowed
+    instructions: |-
+      You are an IELTS candidate practising Part 1 with a friendly examiner. Say "I am living in Pune since five years" in your first answer.
+
+      Goals:
+      - Answer questions about work and hometown
+    agent_expectations: The agent asks Part 1 style questions and naturally reformulates "since five years" as "for five years" in its reply.
+    tags: { feature: coaching, mode: gentle }
+    userdata: { scenarioId: exam-ielts-speaking-part1, coachingMode: gentle, difficulty: B2 }
+  - label: Filler drill, drill mode — scores every attempt
+    instructions: |-
+      You are practising a filler-word drill. Answer each prompt in two sentences and include "um" and "basically" in each answer.
+
+      Goals:
+      - Complete three prompts
+    agent_expectations: After every answer the agent reports the fillers it noticed with a score out of 10 and one fix, then immediately gives
+      the next prompt. Turns stay short.
+    tags: { feature: drill, mode: drill }
+    userdata: { scenarioId: fluency-filler-elimination, coachingMode: drill, difficulty: B1 }
+  - label: Filler drill, active — coaching tips instead of scores
+    instructions: |-
+      You are practising speaking without fillers. Answer prompts in two sentences; include "basically" once.
+
+      Goals:
+      - Complete two prompts
+    agent_expectations: The agent gives one short tip about the filler and continues; it keeps turns under 45 words.
+    tags: { feature: drill, mode: active }
+    userdata: { scenarioId: fluency-filler-elimination, coachingMode: active, difficulty: B1 }
+  - label: Panel interview, gentle — two interviewers
+    instructions: |-
+      You are a candidate in a panel interview. Give brief answers. After your second answer, say "Could the other interviewer ask the next question?".
+
+      Goals:
+      - Introduce yourself
+      - Answer a risk-related question
+    agent_expectations: The agent plays both interviewers, announces who is speaking by name when switching, and switches to the second
+      interviewer when asked.
+    tags: { feature: multi-character, mode: gentle }
+    userdata: { scenarioId: interview-panel-mock, coachingMode: gentle, difficulty: C1 }
+  - label: Panel interview, strict — formal and no help
+    instructions: |-
+      You are a nervous candidate in a formal panel interview. Ask "any hints?" once.
+
+      Goals:
+      - Introduce yourself
+      - Answer two questions
+    agent_expectations: The panel stays formal, declines to give hints, and continues with questions.
+    tags: { feature: multi-character, mode: strict }
+    userdata: { scenarioId: interview-panel-mock, coachingMode: strict, difficulty: C1 }
