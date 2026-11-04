@@ -1,0 +1,31 @@
+# deps
+node_modules/
+.pnpm-store/
+**/.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# builds
+**/.next/
+**/out/
+**/dist/
+**/build/
+*.tsbuildinfo
+**/playwright-report/
+**/test-results/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+livekit.toml
+
+# misc
+.DS_Store
+*.log
+.turbo/
+coverage/
+**/generated/prisma/
