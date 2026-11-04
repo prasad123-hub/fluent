@@ -119,10 +119,37 @@ def plan_reply(chat_ctx: ChatContext, tools: list[Tool]) -> tuple[str, list[Func
 
     if last is not None and last.type == "function_call_output":
         out = last.output or ""
-        if "hint:" in out.lower():
+        low_out = out.lower()
+        if "hint:" in low_out:
             return out.split(":", 1)[1].strip(), []
-        if "summary" in out.lower():
+        if "not available in exam mode" in low_out:
+            return (
+                "I'm sorry, hints aren't available in exam mode. Please answer as best you can.",
+                [],
+            )
+        if "summary" in low_out:
             return "Thanks for practising with me today. Great effort — see you next time!", []
+        if low_out.startswith("question "):
+            return f"Next question. {out.split(':', 1)[1].strip().capitalize()}?", []
+        if "now speaking as" in low_out:
+            name = out.split("now speaking as", 1)[1].split("(")[0].strip()
+            return (
+                f"{name} here — thanks. Let me pick up from there: what would you say your biggest strength is?",
+                [],
+            )
+        if "recorded" in low_out and "/10" in low_out:
+            score = out.split("recorded", 1)[1].split("/")[0].strip()
+            return (
+                f"That's {score} out of 10. Watch the vowel length — try it once more, then we move on.",
+                [],
+            )
+        if "define" in low_out:
+            return (
+                "Sure — a stakeholder is someone with an interest in how a project turns out, like your manager or a client. For example: I aligned the stakeholders before the launch.",
+                [],
+            )
+        if "speaking rate" in low_out or "cannot change speed" in low_out:
+            return "Of course, I'll slow down a little.", []
         return "Got it. Let's continue — tell me more.", []
 
     text = ""
@@ -159,6 +186,44 @@ def plan_reply(chat_ctx: ChatContext, tools: list[Tool]) -> tuple[str, list[Func
                 name="end_session_with_summary",
                 arguments='{"summary": "The learner practised a self-introduction and answered follow-up questions."}',
                 call_id=f"call_end_{n}",
+            )
+        )
+        return "", calls
+    if "next_interview_question" in available and ("next question" in low or "move on" in low):
+        calls.append(
+            FunctionToolCall(
+                name="next_interview_question", arguments="{}", call_id=f"call_next_{n}"
+            )
+        )
+        return "", calls
+    if "switch_persona" in available and "switch to" in low:
+        who = text.lower().split("switch to", 1)[1].strip(" .?!")
+        calls.append(
+            FunctionToolCall(
+                name="switch_persona", arguments=json.dumps({"name": who}), call_id=f"call_sw_{n}"
+            )
+        )
+        return "", calls
+    if "lookup_word" in available and ("what does" in low and "mean" in low):
+        word = text.lower().split("what does", 1)[1].split("mean")[0].strip(" '\"")
+        calls.append(
+            FunctionToolCall(
+                name="lookup_word", arguments=json.dumps({"word": word}), call_id=f"call_lk_{n}"
+            )
+        )
+        return "", calls
+    if (
+        "score_drill_attempt" in available
+        and low.startswith(("ship", "sheep", "very", "the "))
+        and len(text.split()) <= 12
+    ):
+        calls.append(
+            FunctionToolCall(
+                name="score_drill_attempt",
+                arguments=json.dumps(
+                    {"score": 7, "feedback": "Clear, but the vowel in 'sheep' needs to be longer."}
+                ),
+                call_id=f"call_dr_{n}",
             )
         )
         return "", calls
