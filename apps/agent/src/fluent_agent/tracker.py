@@ -48,6 +48,23 @@ FILLERS = {
     "the thing is",
 }
 
+LATENCY_KEYS = {
+    "transcription_delay",
+    "end_of_turn_delay",
+    "on_user_turn_completed_delay",
+    "llm_node_ttft",
+    "llm_node_ttfs",
+    "tts_node_ttfb",
+    "e2e_latency",
+    "playback_latency",
+}
+
+
+def latency_ms(m: dict[str, Any]) -> dict[str, int]:
+    return {
+        k: round(v * 1000) for k, v in m.items() if k in LATENCY_KEYS and isinstance(v, int | float)
+    }
+
 
 class Store:
     """Write sink. `Database` in production; `NullStore` for key-free local runs without Postgres."""
@@ -243,7 +260,7 @@ class SessionTracker:
             )
         else:
             m = dict(msg.metrics)
-            lat = {k: round(v * 1000) for k, v in m.items() if isinstance(v, int | float)}
+            lat = latency_ms(m)
             created = int((msg.created_at - self.t0) * 1000)
             est_dur = int(len(text.split()) / 2.6 * 1000)
             payload = dict(

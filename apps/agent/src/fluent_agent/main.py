@@ -15,6 +15,7 @@ from typing import Any
 
 from livekit import rtc
 from livekit.agents import (
+    NOT_GIVEN,
     Agent,
     AgentServer,
     AgentSession,
@@ -126,8 +127,17 @@ class FluentAgent(Agent):
 
     # ── lifecycle ──────────────────────────────────────────────────────
     async def on_enter(self) -> None:
-        # The scripted opening line goes out via say() — no LLM round-trip, so the greeting lands fast.
-        self.session.say(self.cfg.scenario.agentOpeningLine, allow_interruptions=True)
+        line = self.cfg.scenario.agentOpeningLine
+        if self.session.tts is not None:
+            # The scripted opening line goes out via say() — no LLM round-trip, so the greeting lands fast.
+            self.session.say(line, allow_interruptions=True)
+        else:
+            # Text-only runs (debugger/console without TTS): audio output must be off, and say()
+            # needs TTS, so greet via the LLM instead.
+            self.session.output.set_audio_enabled(False)
+            self.session.generate_reply(
+                instructions=f"Greet the learner with exactly this opening line: {line}"
+            )
 
     async def on_user_turn_completed(self, turn_ctx: Any, new_message: Any) -> None:
         self.ctl.last_user_activity = time.time()
@@ -576,10 +586,14 @@ async def connect_db(s: Settings) -> Database | None:
 
 def build_session(s: Settings, cfg: SessionConfig, vad: Any) -> AgentSession:
     turn_detection = make_turn_detection()
+    stt_engine = make_stt(s)
+    tts_engine = make_tts(s, voice=cfg.meta.voice, speed=cfg.meta.speed)
+    if stt_engine is None and turn_detection not in ("vad", "manual"):
+        turn_detection = "vad"
     return AgentSession(
-        stt=make_stt(s),
+        stt=stt_engine if stt_engine is not None else NOT_GIVEN,
         llm=make_llm(s),
-        tts=make_tts(s, voice=cfg.meta.voice, speed=cfg.meta.speed),
+        tts=tts_engine if tts_engine is not None else NOT_GIVEN,
         vad=vad,
         turn_handling={
             "turn_detection": turn_detection,
@@ -681,7 +695,8 @@ async def entrypoint(ctx: JobContext) -> None:
     )
     ctx.log_context_fields = {"session_id": cfg.meta.sessionId, "room": ctx.room.name}
 
-    store: Store = DbStore(db) if db is not None else NullStore()
+    # Persist only when the session row exists (real dispatch); debugger/console runs log in memory.
+    store: Store = DbStore(db) if db is not None and cfg.user_id is not None else NullStore()
     tracker = SessionTracker(store, cfg.meta.sessionId)
     tracker.start()
     ctl = SessionControl(cfg=cfg, tracker=tracker, ctx=ctx)

@@ -81,12 +81,17 @@ def voice_id(preset: str, provider: str) -> str:
     return override or p[provider]
 
 
-def make_stt(s: Settings) -> stt.STT:
-    if s.stt_provider == "openai" or (
-        s.stt_provider == "deepgram" and not s.deepgram_api_key and s.openai_api_key
-    ):
+def make_stt(s: Settings) -> stt.STT | None:
+    """Returns None when no STT credentials exist (text-only debugger runs still work)."""
+    use_openai = s.stt_provider == "openai" or (not s.deepgram_api_key and bool(s.openai_api_key))
+    if use_openai and s.openai_api_key:
         log.info("stt.provider", provider="openai")
         return openai.STT(model="gpt-4o-transcribe", language="en")
+    if not s.deepgram_api_key:
+        log.warning(
+            "stt.unavailable", note="no DEEPGRAM_API_KEY / OPENAI_API_KEY — audio input disabled"
+        )
+        return None
     log.info("stt.provider", provider="deepgram", model="nova-3")
     return deepgram.STT(
         model="nova-3",
@@ -96,12 +101,12 @@ def make_stt(s: Settings) -> stt.STT:
         smart_format=False,
         filler_words=True,  # keep um/uh so fluency metrics can count them
         endpointing_ms=25,
-        api_key=s.deepgram_api_key or None,  # type: ignore[arg-type]
+        api_key=s.deepgram_api_key,
     )
 
 
 def make_llm(s: Settings, *, temperature: float = 0.6) -> llm.LLM:
-    if s.fake_llm:
+    if s.fake_llm or not (s.openai_api_key or s.anthropic_api_key):
         from .fake_llm import ScriptedLLM
 
         log.warning(
@@ -113,24 +118,31 @@ def make_llm(s: Settings, *, temperature: float = 0.6) -> llm.LLM:
     return openai.LLM(model=s.llm_model, temperature=temperature, parallel_tool_calls=True)
 
 
-def make_tts(s: Settings, *, voice: str, speed: float) -> tts.TTS:
-    provider = s.tts_provider
-    if provider == "cartesia" and not s.cartesia_api_key:
-        provider = (
-            "openai" if s.openai_api_key else ("elevenlabs" if s.elevenlabs_api_key else "cartesia")
-        )
+def make_tts(s: Settings, *, voice: str, speed: float) -> tts.TTS | None:
+    """Picks the configured TTS, falling back to any provider with a key; None when none is configured."""
+    provider: str = s.tts_provider
+    keys: dict[str, str | None] = {
+        "cartesia": s.cartesia_api_key,
+        "elevenlabs": s.elevenlabs_api_key,
+        "openai": s.openai_api_key,
+    }
+    if not keys.get(provider):
+        provider = next((p for p, k in keys.items() if k), "")
     if provider == "elevenlabs":
         return elevenlabs.TTS(
             voice_id=voice_id(voice, "elevenlabs"), model="eleven_turbo_v2_5", language="en"
         )
     if provider == "openai":
         return openai.TTS(model="gpt-4o-mini-tts", voice=voice_id(voice, "openai"), speed=speed)
-    return cartesia.TTS(
-        model="sonic-3",
-        language="en",
-        voice=voice_id(voice, "cartesia"),
-        speed=cartesia_speed(speed),
-    )
+    if provider == "cartesia":
+        return cartesia.TTS(
+            model="sonic-3",
+            language="en",
+            voice=voice_id(voice, "cartesia"),
+            speed=cartesia_speed(speed),
+        )
+    log.warning("tts.unavailable", note="no TTS API key — audio output disabled")
+    return None
 
 
 def apply_tts_speed(engine: tts.TTS, speed: float) -> bool:

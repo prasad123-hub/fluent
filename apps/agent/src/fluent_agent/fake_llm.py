@@ -132,9 +132,11 @@ def plan_reply(chat_ctx: ChatContext, tools: list[Tool]) -> tuple[str, list[Func
 
     # instructions from generate_reply(instructions=...) / on_enter
     if last is not None and last.type == "message" and last.role == "system":
-        if "greet" in low or "opening" in low:
+        if "opening line:" in low:
+            return text.split("line:", 1)[1].strip(), []
+        if "greet" in low:
             return (
-                "Hi, this is Meera from Zephyr Labs. Thanks for making time today. To start, could you tell me a little about yourself?",
+                "Hello! Thanks for joining. To start, could you tell me a little about yourself?",
                 [],
             )
         if "silent" in low or "prompt" in low:
