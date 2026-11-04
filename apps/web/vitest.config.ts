@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "prisma/**/*.test.ts"],
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     env: { FLUENT_SKIP_ENV_VALIDATION: "1" },

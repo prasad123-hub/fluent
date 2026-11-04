@@ -14,13 +14,22 @@ Resume rule: read `SPEC.md`, this file and `docs/DECISIONS.md`, then continue fr
 - Blockers noted: vendor docs sites unreachable; no provider API keys in sandbox.
 
 ## Phase 2 — Scaffold + design system — DONE
+
 - pnpm workspace (`apps/web`, `apps/agent`, `packages/shared`), docker-compose (Postgres, MinIO, optional LiveKit), `.env.example`, Makefile, CI workflow.
 - Prisma schema + `init` migration (applied to a local Postgres 16 cluster at `/var/lib/fluent-pg`; Docker daemon is unavailable in the sandbox).
 - Shared JSON Schemas → generated TS types (`pnpm shared:gen`) + Pydantic mirrors (`apps/agent/src/fluent_agent/schemas.py`) validated against shared fixtures.
 - Geist/Vercel design system: tokens in `globals.css`, Geist fonts, 30+ restyled primitives, app shell (navbar + sliding tab bar + ⌘K), theme toggle, `/design` showcase; screenshots in `docs/screenshots/design-*.png`.
 - Agent skeleton: settings (validated), structlog, asyncpg DB layer. `pnpm lint/typecheck/test` and `ruff/mypy/pytest` green.
 
-## Phase 3 — Scenario content — NEXT
+## Phase 3 — Scenario content — DONE
+
+- 13 themes, **88 scenarios** in `apps/web/prisma/seed-data/*.ts` (rich personas, goals, criteria, vocabulary, mistakes, templates; panel/GD scenarios declare `characters`).
+- `prisma/seed.ts` upserts owner + themes + scenarios; validated by `prisma/seed-data/seed-data.test.ts` (schema, counts, unique ids). Seeded into the local DB.
+- `docs/SCENARIO_AUTHORING.md` written.
+
+## Phase 4 — Session backend — IN PROGRESS (auth gate, sessions API, LiveKit token/room/dispatch, webhook written; needs verification)
+
+## Phase 5 — Agent MVP — IN PROGRESS (worker, FluentAgent + tools, tracker, scripted LLM written; needs `lk agent debugger` verification)
 
 ## Phase 3 — Scenario content
 

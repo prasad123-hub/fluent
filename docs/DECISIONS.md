@@ -16,3 +16,7 @@ One line each: decision + reason. Newest at the bottom.
 - Recharts 2.15.x, zod 3.x, TanStack Table 8.x, `motion` 14 — known stable APIs; newer majors unverifiable offline.
 - No provider API keys exist in the build sandbox → the agent ships a deterministic **scripted LLM mode** (`FLUENT_FAKE_LLM=1`) so `lk agent debugger`, pytest and plumbing checks run key-free; real-model behaviour is verified when keys are present.
 - Analysis runs inside the agent worker in `on_session_end` (bounded by `session_end_timeout`), with a Postgres-backed retry path (`POST /api/sessions/:id/retry-analysis`) as the safety net — no queue/Redis.
+- Session status updates reach the frontend by **polling** `GET /api/sessions/:id` (1–2 s) rather than SSE: one user, short sessions, and it survives serverless deploys; no long-lived connections to manage.
+- TTS voice presets map to **one verified Cartesia voice id** (the plugin default) for every preset until real ids are set via `FLUENT_VOICE_<PRESET>_CARTESIA`; Cartesia's voice library is unreachable offline. OpenAI TTS voices are mapped individually; ElevenLabs uses the plugin default id.
+- `lookup_word` has no bundled dictionary; the tool returns guidance and the conversation LLM supplies the definition (no extra dependency, works offline).
+- Ending a session: the web app deletes the LiveKit room; the agent's `on_session_end` hook (runs even on crashes) finalises the DB row and triggers analysis. The LiveKit webhook is the second safety net.
