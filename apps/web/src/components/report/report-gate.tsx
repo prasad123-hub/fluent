@@ -19,8 +19,7 @@ const STEPS = [
 ];
 
 /**
- * Shows the analysing state and swaps to the full report when it is ready.
- * TODO(phase-9): render the full report body when status === complete.
+ * Shows the analysing / failed states and refreshes into the full report when it is ready.
  */
 export function ReportGate({
   sessionId,
@@ -72,12 +71,8 @@ export function ReportGate({
   }
 
   if (status === "complete" && hasReport) {
-    return (
-      <>
-        <PageHeader title={scenarioTitle} description="Your session report." />
-        <p className="text-sm text-secondary">The full report view arrives in Phase 9.</p>
-      </>
-    );
+    // The server page renders ReportView for complete sessions; reaching here means a refresh is pending.
+    return <PageHeader title={scenarioTitle} description="Loading your report…" />;
   }
 
   if (status === "failed") {

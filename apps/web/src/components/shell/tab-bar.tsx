@@ -40,7 +40,7 @@ export function TabBar({ items, className }: { items: TabItem[]; className?: str
     <nav aria-label="Sections" className={cn("relative border-b border-border", className)}>
       <div
         ref={listRef}
-        className="relative -mb-px flex scrollbar-none items-stretch gap-0 overflow-x-auto px-2 sm:px-0"
+        className="relative -mb-px scrollbar-none flex items-stretch gap-0 overflow-x-auto px-2 sm:px-0"
         onMouseLeave={() => setHover(null)}
       >
         {hover ? (

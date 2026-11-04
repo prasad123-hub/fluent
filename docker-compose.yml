@@ -41,6 +41,35 @@ services:
       mc mb -p local/fluent-recordings || true;
       exit 0"
 
+  # Optional: run the agent worker and the analysis worker in Docker (`docker compose --profile agent up`).
+  # Needs `.env` at the repo root with provider keys and LIVEKIT_* (use host.docker.internal for a local LiveKit server).
+  agent:
+    profiles: ["agent"]
+    build:
+      context: .
+      dockerfile: apps/agent/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://fluent:fluent@postgres:5432/fluent
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  analysis-worker:
+    profiles: ["agent"]
+    build:
+      context: .
+      dockerfile: apps/agent/Dockerfile
+    command: ["analysis-worker", "--watch"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://fluent:fluent@postgres:5432/fluent
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # Optional self-hosted LiveKit server (otherwise use LiveKit Cloud).
   livekit:
     profiles: ["livekit"]

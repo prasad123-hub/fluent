@@ -320,7 +320,7 @@ export function PracticeLauncher({
               ]}
             />
           </div>
-          <div className="-mx-1 flex scrollbar-none gap-1.5 overflow-x-auto px-1 pb-1">
+          <div className="-mx-1 scrollbar-none flex gap-1.5 overflow-x-auto px-1 pb-1">
             {[
               { id: "all", title: "All themes" },
               ...themes,
@@ -349,7 +349,7 @@ export function PracticeLauncher({
                   <h2 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-secondary">
                     <Sparkles className="size-3.5" /> Recommended for you
                   </h2>
-                  <div className="flex scrollbar-none gap-3 overflow-x-auto pb-1">
+                  <div className="scrollbar-none flex gap-3 overflow-x-auto pb-1">
                     {recommended.map((s) => (
                       <ScenarioRow key={s.id} s={s} compact />
                     ))}
@@ -361,7 +361,7 @@ export function PracticeLauncher({
                   <h2 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-secondary">
                     <Clock className="size-3.5" /> Recent
                   </h2>
-                  <div className="flex scrollbar-none gap-3 overflow-x-auto pb-1">
+                  <div className="scrollbar-none flex gap-3 overflow-x-auto pb-1">
                     {recent.map((s) => (
                       <ScenarioRow key={s.id} s={s} compact />
                     ))}
@@ -373,7 +373,7 @@ export function PracticeLauncher({
                   <h2 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-secondary">
                     <Star className="size-3.5" /> Favourites
                   </h2>
-                  <div className="flex scrollbar-none gap-3 overflow-x-auto pb-1">
+                  <div className="scrollbar-none flex gap-3 overflow-x-auto pb-1">
                     {favourites.map((s) => (
                       <ScenarioRow key={s.id} s={s} compact />
                     ))}

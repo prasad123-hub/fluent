@@ -27,3 +27,7 @@ One line each: decision + reason. Newest at the bottom.
 - `wordfreq` (bundled English frequency data) provides the top-1k/2k/5k lists and Zipf frequencies for vocabulary metrics; it runs offline.
 - Without an LLM key the judge is a deterministic rule-based `scripted_judgement` so the pipeline, dashboard and tests work offline; real sessions use the model judge with a strict JSON schema.
 - JSON columns are passed to asyncpg as Python objects through a jsonb codec (never pre-serialised); the metrics loader tolerates legacy string-encoded rows.
+- Charts: Recharts wrapped in four Vercel-styled components (`TrendChart`, `SkillsRadar`, `Bars`, `Heatmap`); server components pass only serialisable props (e.g. `scoreTone`), never functions.
+- Session report "Export PDF" uses the browser print pipeline with print-only CSS (no PDF library); transcript download is a client-side `.txt` blob.
+- Voice flashcards are a generated custom scenario (`POST /api/vocab/voice-session`) built from due vocabulary, so the existing drill agent tooling (`score_drill_attempt`) covers them without a second agent mode.
+- Horizontal overflow on phones is prevented structurally (`min-w-0` cards, `overflow-x-hidden` main) after a 390px screenshot came out 605px wide.

@@ -186,5 +186,11 @@ async def persist_report(
     await db.upsert_vocab(sess["userId"], sess["id"], [v.model_dump() for v in report.vocabBank])
     prev_profile = await db.get_profile(sess["userId"])
     minutes = float(sess.get("durationSec") or det.speakingTimeSec + det.agentSpeakingTimeSec) / 60
-    new_profile = update_profile(prev_profile, report, session_minutes=round(minutes, 1))
+    ended = sess.get("endedAt") or sess.get("createdAt")
+    new_profile = update_profile(
+        prev_profile,
+        report,
+        session_minutes=round(minutes, 1),
+        today=ended.date() if ended else None,
+    )
     await db.upsert_profile(sess["userId"], new_profile)
