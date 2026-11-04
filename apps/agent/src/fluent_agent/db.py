@@ -17,6 +17,11 @@ from .log import get_logger
 log = get_logger("db")
 
 
+def utcnow() -> datetime:
+    """Prisma columns are `timestamp(3)` without time zone: asyncpg needs naive UTC datetimes."""
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
 def _cuid() -> str:
     # Prisma-compatible enough: 25 chars, starts with 'c'. Collisions are practically impossible.
     import secrets
@@ -73,17 +78,24 @@ class Database:
             sets.append(f'"{k}" = ${len(args)}')
         await self.pool.execute(f'UPDATE "Session" SET {", ".join(sets)} WHERE id = $1', *args)
 
-    async def mark_live(self, session_id: str) -> None:
-        await self.set_session_status(session_id, "live", startedAt=datetime.now(UTC))
+    async def mark_live(self, session_id: str) -> bool:
+        """Only a `starting` session becomes live (a superseded/ended one must not be revived)."""
+        res = await self.pool.execute(
+            'UPDATE "Session" SET status = \'live\', "startedAt" = $2, "updatedAt" = now() '
+            "WHERE id = $1 AND status = 'starting'",
+            session_id,
+            utcnow(),
+        )
+        return res.endswith("1")
 
     async def mark_ended(self, session_id: str, *, reason: str, duration_sec: int) -> None:
         await self.set_session_status(
             session_id,
             "analyzing",
-            endedAt=datetime.now(UTC),
+            endedAt=utcnow(),
             endReason=reason,
             durationSec=duration_sec,
-            analysisStartedAt=datetime.now(UTC),
+            analysisStartedAt=utcnow(),
         )
         await self.pool.execute(
             'UPDATE "Session" SET "analysisAttempts" = "analysisAttempts" + 1 WHERE id = $1',

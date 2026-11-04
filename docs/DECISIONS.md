@@ -20,3 +20,6 @@ One line each: decision + reason. Newest at the bottom.
 - TTS voice presets map to **one verified Cartesia voice id** (the plugin default) for every preset until real ids are set via `FLUENT_VOICE_<PRESET>_CARTESIA`; Cartesia's voice library is unreachable offline. OpenAI TTS voices are mapped individually; ElevenLabs uses the plugin default id.
 - `lookup_word` has no bundled dictionary; the tool returns guidance and the conversation LLM supplies the definition (no extra dependency, works offline).
 - Ending a session: the web app deletes the LiveKit room; the agent's `on_session_end` hook (runs even on crashes) finalises the DB row and triggers analysis. The LiveKit webhook is the second safety net.
+- `FLUENT_FIXED_LOAD` (dev only) pins the load the worker reports: LiveKit assigns jobs by `target_load − reported_load`, and a single worker on a busy laptop/sandbox can otherwise be skipped ("no servers available").
+- Local runs unset `HTTP(S)_PROXY` for the agent: the sandbox egress proxy rejects plain `ws://localhost` CONNECTs with 405; irrelevant outside the sandbox.
+- Bcrypt hash in `.env` is written as `\$2b\$12…` because `@next/env` expands `$…` even inside single quotes (verified); hosting dashboards take the raw hash.

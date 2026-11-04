@@ -54,10 +54,21 @@ export async function createPracticeSession(
     : null;
 
   // Abandon any still-live session so the learner never has two agents running
-  await prisma.session.updateMany({
+  const stale = await prisma.session.findMany({
     where: { userId, status: { in: ["starting", "live"] } },
-    data: { status: "failed", failureReason: "superseded by a new session", endedAt: new Date() },
+    select: { id: true, livekitRoomName: true },
   });
+  if (stale.length) {
+    await prisma.session.updateMany({
+      where: { id: { in: stale.map((s) => s.id) } },
+      data: { status: "failed", failureReason: "superseded by a new session", endedAt: new Date() },
+    });
+    await Promise.all(
+      stale
+        .filter((s) => s.livekitRoomName !== "pending")
+        .map((s) => deleteRoomQuietly(s.livekitRoomName)),
+    );
+  }
 
   let scenarioTitle = "Custom scenario";
   let themeSlug = "custom";

@@ -642,14 +642,32 @@ def wire_events(session: AgentSession, ctl: SessionControl) -> None:
     def _agent_state(ev: AgentStateChangedEvent) -> None:
         if ev.old_state == "speaking" and ev.new_state != "speaking":
             ctl.last_agent_done = time.time()
-            ctl.silence_stage = 0
+            # silence_stage is reset only by user activity, so a silence episode prompts at most twice
 
     @session.on("agent_false_interruption")
     def _false_int(ev: AgentFalseInterruptionEvent) -> None:
         tracker.event("interruption", {"by": "noise", "false": True})
 
 
-server = AgentServer(setup_fnc=prewarm, drain_timeout=90, session_end_timeout=300)
+def _load_fnc() -> Any:
+    """LiveKit assigns jobs by (target_load − reported load). On a busy dev box the real CPU load can
+    starve a single worker, so FLUENT_FIXED_LOAD=0 pins the reported load for local development only."""
+    import os
+
+    fixed = os.environ.get("FLUENT_FIXED_LOAD")
+    if fixed is None:
+        return None
+    value = max(0.0, min(1.0, float(fixed)))
+    return lambda: value
+
+
+_fixed_load = _load_fnc()
+server = AgentServer(
+    setup_fnc=prewarm,
+    drain_timeout=90,
+    session_end_timeout=300,
+    **({"load_fnc": _fixed_load} if _fixed_load is not None else {}),
+)
 
 
 async def on_session_end(ctx: JobContext) -> None:
@@ -721,7 +739,10 @@ async def entrypoint(ctx: JobContext) -> None:
     ctl.started_at = time.time()
     if db is not None and cfg.user_id is not None:
         try:
-            await db.mark_live(cfg.meta.sessionId)
+            if not await db.mark_live(cfg.meta.sessionId):
+                log.warning("session.not_starting", note="session was superseded or ended; closing")
+                request_end(ctl, session, "superseded")
+                return
         except Exception as e:  # noqa: BLE001
             log.warning("mark_live.failed", error=str(e))
     ctl.spawn(watchdog(ctl, session), "watchdog")
